@@ -3,10 +3,14 @@ package games.breaker2;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.beans.PropertyChangeListener;
 
+import javax.swing.AbstractAction;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 
 /**Class for a Panel in a BrickBreaker game.
  * */
@@ -34,41 +38,76 @@ class Paddle extends JPanel {
     public Paddle(final int xLoc, final int yLoc) {
         setLocation(xLoc, yLoc);
         setSize(PADDLEWIDTH, PADDLEHEIGHT);
-        setFocusable(true);
-        this.addKeyListener(new KeyListener() {
-            // Policy: A move key is only used if the paddle is not currently
-            // moving. A move key release always sets the paddle to not move.
-            // If both move keys were pressed at the same time, the first one
-            // to be registered wins. When the other key is released the paddle
-            // stops until keyTyped fires. This stoppage will likely not be
-            // noticeable.
-            @Override
-            public void keyPressed(final KeyEvent arg0) {
-                // Ignore all key presses while the paddle is moving.
-                if (direction != 0) { return; }
 
-                char charEntered = Character.toLowerCase(arg0.getKeyChar());
-                if (charEntered == 'a') { direction = -1; }
-                if (charEntered == 'd') { direction =  1; }
-            }
+        // Code necessary to use KeyBindings
+        getInputMap().put(KeyStroke.getKeyStroke("a"), "Go Left");
+        getInputMap().put(KeyStroke.getKeyStroke("A"), "Go Left");
+        getInputMap().put(KeyStroke.getKeyStroke("d"), "Go Right");
+        getInputMap().put(KeyStroke.getKeyStroke("D"), "Go Right");
+        getInputMap().put(
+                KeyStroke.getKeyStroke("released a"), "Clear Direction");
+        getInputMap().put(
+                KeyStroke.getKeyStroke("released A"), "Clear Direction");
+        getInputMap().put(
+                KeyStroke.getKeyStroke("released d"), "Clear Direction");
+        getInputMap().put(
+                KeyStroke.getKeyStroke("released D"), "Clear Direction");
 
+        getActionMap().put("Go Left", new AbstractAction() {
             @Override
-            public void keyReleased(final KeyEvent arg0) {
-                char charReleased = Character.toLowerCase(arg0.getKeyChar());
-                if (charReleased == 'a' || charReleased == 'd') {
-                    direction = 0;
-                }
-            }
-
-            @Override
-            public void keyTyped(final KeyEvent arg0) {
-                // Do nothing while the paddle is moving
-                if (direction != 0) { return; }
-                char charTyped = Character.toLowerCase(arg0.getKeyChar());
-                if (charTyped == 'a') { direction = -1; }
-                if (charTyped == 'd') { direction =  1; }
+            public void actionPerformed(ActionEvent arg0) {
+                if (direction == 0) direction = -1;
             }
         });
+        getActionMap().put("Go Right", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (direction == 0) direction = 1;
+            }
+            
+        });
+        getActionMap().put("Clear Direction", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                direction = 0;
+            }
+        });
+
+//        // Code necessary to use KeyListeners. I should use keybindings since
+//        // they're easier to test but I'll work on that with the next iteration.
+//        setFocusable(true);
+//        this.addKeyListener(new KeyListener() {
+//            // Policy: A move key is only used if the paddle is not currently
+//            // moving. A move key release always sets the paddle to not move.
+//            // If both move keys were pressed at the same time, the first one
+//            // to be registered wins. When the other key is released the paddle
+//            // stops until keyTyped fires. This stoppage will likely not be
+//            // noticeable.
+//            @Override
+//            public void keyPressed(final KeyEvent arg0) {
+//                // Debugging
+//                System.out.printf("%c pressed\n", arg0.getKeyChar());
+//
+//                // Ignore all key presses while the paddle is moving.
+//                if (direction != 0) { return; }
+//
+//                char charEntered = Character.toLowerCase(arg0.getKeyChar());
+//                if (charEntered == 'a') { direction = -1; }
+//                if (charEntered == 'd') { direction =  1; }
+//            }
+//
+//            @Override
+//            public void keyReleased(final KeyEvent arg0) {
+//                char charReleased = Character.toLowerCase(arg0.getKeyChar());
+//                if (charReleased == 'a' || charReleased == 'd') {
+//                    direction = 0;
+//                }
+//            }
+//
+//            @Override
+//            public void keyTyped(final KeyEvent arg0) { return; }
+//        });
+//        // End of code for KeyListeners
     }
 
     /**Simplified constructor for a paddle that uses only default parameters.
@@ -77,7 +116,7 @@ class Paddle extends JPanel {
         this(XSTART, YSTART);
     }
 
-    /** Additional tasks for painting a Paddle.
+    /**Additional tasks for painting a Paddle.
      * @param g The graphics object.
      */
     public void paintComponent(final Graphics g) {
@@ -118,7 +157,12 @@ class Paddle extends JPanel {
                 && ball.getYVelocity() > 0 // going down
                 ) {
             ball.setYVelocity(ball.getYVelocity() * -1);
-            if (ball.getX() + ball.getRadius() < this.getX() + PADDLEWIDTH / 2) {
+            // This section increments or decrements the Ball's x velocity
+            // based on which side of the paddle it hits. This is a weak way to
+            // change the velocity of the ball but it works for a first pass
+            // solution.
+            if ((ball.getX() + ball.getRadius())
+                    < (this.getX() + PADDLEWIDTH / 2)) {
                 ball.setXVelocity(ball.getXVelocity() - 1);
             } else {
                 ball.setXVelocity(ball.getXVelocity() + 1);
